@@ -326,7 +326,7 @@ const WEATHER = {
   storm:  { icon: '⛈️', name: '雷雨', desc: '打雷好可怕！心情下降 ×2' },
 };
 const TOD = { day: { icon: '🌞', name: '白天' }, dusk: { icon: '🌇', name: '黃昏' }, night: { icon: '🌙', name: '夜晚' } };
-const RATE = { hunger: 1, mood: 0.8, clean: 0.5, energy: 0.5 }; // 每分鐘下降
+const RATE = { hunger: 0.3, mood: 0.25, clean: 0.15, energy: 0.15 }; // 每分鐘下降（v2：調慢為約 1/3）
 
 function newState(name, species, birthday) {
   return {
