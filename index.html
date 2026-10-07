@@ -326,7 +326,9 @@ const WEATHER = {
   storm:  { icon: '⛈️', name: '雷雨', desc: '打雷好可怕！心情下降 ×2' },
 };
 const TOD = { day: { icon: '🌞', name: '白天' }, dusk: { icon: '🌇', name: '黃昏' }, night: { icon: '🌙', name: '夜晚' } };
-const RATE = { hunger: 0.3, mood: 0.25, clean: 0.15, energy: 0.15 }; // 每分鐘下降（v2：調慢為約 1/3）
+const RATE = { hunger: 0.3, mood: 0.25, clean: 0.15, energy: 0.1 }; // 每分鐘下降（v2：調慢為約 1/3；v3：體力再調慢）
+const PLAY_COST = 5;  // 玩耍消耗的體力（v3：10 → 5）
+const GAME_COST = 8;  // 小遊戲消耗的體力（v3：15 → 8）
 
 function newState(name, species, birthday) {
   return {
@@ -425,7 +427,7 @@ function simulate(dm, t) {
     st.clean -= RATE.clean * 0.5 * sick * dm;
     st.energy += (tod === 'night' ? 8 : 5) * dm;
   } else {
-    if (tod === 'night') mE *= 1.5;
+    if (tod === 'night') mE *= 1.2;
     st.hunger -= RATE.hunger * sick * mH * dm;
     st.mood -= RATE.mood * sick * mM * dm;
     st.clean -= RATE.clean * sick * dm;
@@ -1062,8 +1064,8 @@ function bath() {
 }
 function play() {
   if (!canAct()) return;
-  if (S.stats.energy < 15) { say('好累…玩不動了'); return; }
-  S.stats.mood = clamp(S.stats.mood + 15); S.stats.energy = clamp(S.stats.energy - 10); S.counters.played++;
+  if (S.stats.energy < PLAY_COST) { say('好累…玩不動了'); return; }
+  S.stats.mood = clamp(S.stats.mood + 15); S.stats.energy = clamp(S.stats.energy - PLAY_COST); S.counters.played++;
   startAnim('play', 2000); burst('heart', 3);
   say(pick(['好好玩！', '再丟一次！', '接到了！', '哈哈哈～']));
   gainExp(8);
@@ -1090,7 +1092,7 @@ function openGames() {
   if (!canAct()) return;
   if (S.sick) { say('生病了，先吃藥休息吧…'); return; }
   openModal('🎮 小遊戲', `
-    <p class="muted">每次遊玩消耗 ⚡ 體力 15，目前體力 ${Math.floor(S.stats.energy)}</p>
+    <p class="muted">每次遊玩消耗 ⚡ 體力 ${GAME_COST}，目前體力 ${Math.floor(S.stats.energy)}</p>
     <div class="list" style="margin-top:10px">
       <div class="item"><span class="ico">🍎</span><div class="info">接食物<small>左右移動接住食物、避開炸彈！30 秒，分數 = 金幣</small></div>
         <button class="btn" onclick="startCatch()">開始</button></div>
@@ -1099,8 +1101,8 @@ function openGames() {
     </div>`);
 }
 function payEnergy() {
-  if (S.stats.energy < 15) { closeModal(); say('好累…玩不動了'); return false; }
-  S.stats.energy = clamp(S.stats.energy - 15); S.counters.games++;
+  if (S.stats.energy < GAME_COST) { closeModal(); say('好累…玩不動了'); return false; }
+  S.stats.energy = clamp(S.stats.energy - GAME_COST); S.counters.games++;
   updateUI(); return true;
 }
 
@@ -1166,7 +1168,7 @@ function endCatch(g) {
     <p style="font-size:18px">得分：<b>${g.score}</b></p>
     <p>獲得 🪙 ${coins} 金幣、💛 心情 +${mood}、⭐ 經驗 +10</p>
     <div class="opt-row" style="margin-top:12px">
-      <button class="btn row primary" onclick="startCatch()">再玩一次（體力 −15）</button>
+      <button class="btn row primary" onclick="startCatch()">再玩一次（體力 −${GAME_COST}）</button>
       <button class="btn row" onclick="closeModal()">回家</button>
     </div>`);
   say(g.score >= 20 ? '我們好厲害！' : '好好玩～');
@@ -1197,7 +1199,7 @@ function renderRPS(msg, myHand, petHand, done) {
       <div class="rps-hands"><div><span>${myHand}</span>你</div><div><span>${petHand}</span>${esc(S.name)}</div></div>
       <p>${msg}</p>
       ${done ? `<div class="opt-row" style="justify-content:center;margin-top:10px">
-          <button class="btn row primary" onclick="startRPS()">再來一場（體力 −15）</button>
+          <button class="btn row primary" onclick="startRPS()">再來一場（體力 −${GAME_COST}）</button>
           <button class="btn row" onclick="closeModal()">回家</button></div>`
         : `<div class="rps-choices">${Object.entries(HANDS).map(([k, v]) => `<button class="btn" onclick="playRPS('${k}')">${v}</button>`).join('')}</div>`}
     </div>`);
